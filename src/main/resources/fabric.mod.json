@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "inventories",
+  "version": "${version}",
+  "name": "Inventories",
+  "description": "View and Share Inentories from your web browser!",
+  "authors": [
+    "Xwaffle"
+  ],
+  "contact": {
+    "website": "http://inventories.chasem.dev/"
+  },
+  "license": "MIT",
+  "icon": "assets/inventories/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.chasem.inventories.InventoryFabric"
+    ]
+  },
+  "mixins": [
+    "inventories.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "minecraft": "1.18.x",
+    "java": ">=17"
+  }
+}
