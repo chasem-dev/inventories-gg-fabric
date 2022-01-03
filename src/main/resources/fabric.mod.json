@@ -18,9 +18,6 @@
       "dev.chasem.inventories.InventoryFabric"
     ]
   },
-  "mixins": [
-    "inventories.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",

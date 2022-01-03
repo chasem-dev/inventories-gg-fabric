@@ -3,9 +3,16 @@ package dev.chasem.inventories;
 import dev.chasem.inventories.adapter.FabricPlayerAdapter;
 import gg.inventories.InventoriesCore;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 
 public class InventoryFabric implements ModInitializer {
 
@@ -13,11 +20,11 @@ public class InventoryFabric implements ModInitializer {
     private static ModConfig config = new ModConfig();
 
     private final FabricPlayerAdapter playerAdapter = new FabricPlayerAdapter();
+    private static MinecraftServer mcServer;
 
     public static InventoryFabric getInstance() {
         return instance;
     }
-
     public static ModConfig getConfig() {
         return config;
     }
@@ -41,10 +48,24 @@ public class InventoryFabric implements ModInitializer {
         } else {
             InventoriesCore.setClientSecret(getClientSecret());
         }
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> InventoryFabric.mcServer = server);
 
-//        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> new ConfigCommand(getConfig()).register(dispatcher, true));
+        ServerPlayConnectionEvents.JOIN.register((ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server)
+                -> syncPlayer(handler.player));
 
+        ServerPlayConnectionEvents.DISCONNECT.register((ServerPlayNetworkHandler handler, MinecraftServer server)
+                -> syncPlayer(handler.player));
 
+        Runnable syncAllPlayersTask = () -> {
+            if(mcServer == null) { return; }
+
+            for (ServerPlayerEntity player : mcServer.getOverworld().getPlayers()) {
+                syncPlayer(player);
+            }
+        };
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(syncAllPlayersTask, 2, 2, TimeUnit.MINUTES);
     }
 
     private String getClientSecret() {
